@@ -1,0 +1,169 @@
+---
+title: Installation
+description: Install and configure Hevy HTTP MCP server
+---
+
+# Installation
+
+Get Hevy HTTP MCP running on your machine with these step-by-step instructions.
+
+## Prerequisites
+
+Before installing, ensure you have the following:
+
+<Steps>
+  <Step title="Install Bun">
+    Hevy HTTP MCP requires [Bun](https://bun.sh/) v1.0 or higher.
+
+    ```bash
+    curl -fsSL https://bun.sh/install | bash
+    ```
+
+    Verify your installation:
+
+    ```bash
+    bun --version
+    ```
+  </Step>
+
+  <Step title="Get a Hevy Pro account">
+    You need a **Hevy Pro** subscription to access the Hevy API.
+
+    <Warning>
+    The Hevy API is only available to Hevy Pro subscribers. Free accounts cannot generate API keys.
+    </Warning>
+
+    If you don't have Hevy Pro yet, upgrade at [hevyapp.com](https://www.hevyapp.com/).
+  </Step>
+
+  <Step title="Generate your Hevy API key">
+    1. Log in to Hevy on the web
+    2. Navigate to [Settings → Developer](https://hevy.com/settings?developer)
+    3. Generate a new API key
+    4. Save the key securely - you'll need it for configuration
+
+    <Note>
+    Keep your API key secure. It grants full access to your workout data.
+    </Note>
+  </Step>
+</Steps>
+
+## Install from source
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repo-url> hevy-http-mcp
+    cd hevy-http-mcp
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Use Bun to install all required packages:
+
+    ```bash
+    bun install
+    ```
+
+    This installs:
+    - `elysia` - Web framework
+    - `elysia-mcp` - MCP protocol implementation
+    - `ofetch` - HTTP client for Hevy API
+  </Step>
+
+  <Step title="Configure environment variables">
+    Copy the example environment file and edit it with your credentials:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Open `.env` in your editor and configure the required variables:
+
+    ```bash
+    # Required: Your Hevy API key from https://hevy.com/settings?developer
+    HEVY_API_KEY=your_hevy_api_key_here
+
+    # Required: A secure random string for MCP client authentication
+    MCP_API_KEY=your_mcp_access_key_here
+
+    # Optional: Server configuration
+    # PORT=3000
+    # HOST=127.0.0.1
+    # LOG_LEVEL=info
+    ```
+
+    <Warning>
+    Never commit your `.env` file to version control. It contains sensitive credentials.
+    </Warning>
+
+    ### Environment variables explained
+
+    | Variable | Required | Default | Description |
+    |----------|----------|---------|-------------|
+    | `HEVY_API_KEY` | Yes | - | Your Hevy API key from the developer settings |
+    | `MCP_API_KEY` | Yes | - | Secret key that MCP clients must use to authenticate |
+    | `PORT` | No | `3000` | HTTP port for the MCP server |
+    | `HOST` | No | `127.0.0.1` | Hostname to bind the server to |
+    | `LOG_LEVEL` | No | `info` | Logging verbosity: `debug`, `info`, `warn`, or `error` |
+
+    <Info>
+    Generate a secure random string for `MCP_API_KEY` using:
+    ```bash
+    openssl rand -base64 32
+    ```
+    </Info>
+  </Step>
+
+  <Step title="Start the server">
+    Run the MCP server:
+
+    ```bash
+    bun run start
+    ```
+
+    You should see output confirming the server is running:
+
+    ```
+    Starting hevy-http-mcp server…
+    All Hevy MCP tools registered
+    hevy-http-mcp listening on http://127.0.0.1:3000/mcp
+    ```
+  </Step>
+</Steps>
+
+## Development mode
+
+For development with hot-reload:
+
+```bash
+bun run dev
+```
+
+The server will automatically restart when you modify source files.
+
+## Verify installation
+
+Test that your server is running and authenticated correctly:
+
+```bash
+curl -H "Authorization: Bearer your_mcp_access_key_here" \
+  http://localhost:3000/mcp
+```
+
+You should receive a valid MCP protocol response.
+
+<Note>
+Replace `your_mcp_access_key_here` with the actual `MCP_API_KEY` from your `.env` file.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Connect your first MCP client and make API calls
+  </Card>
+  <Card title="Configuration" icon="gear" href="/guides/configuration">
+    Learn about advanced configuration options
+  </Card>
+</CardGroup>

@@ -1,0 +1,401 @@
+---
+title: Workout Types
+description: TypeScript type definitions for workout-related data structures
+---
+
+## Workout
+
+The main workout object returned by the API.
+
+```typescript
+export interface Workout {
+  id: string;
+  title: string;
+  routine_id: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  updated_at: string;
+  created_at: string;
+  exercises: WorkoutExercise[];
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the workout
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Title of the workout
+</ResponseField>
+
+<ResponseField name="routine_id" type="string" required>
+  ID of the routine this workout is based on
+</ResponseField>
+
+<ResponseField name="description" type="string" required>
+  Description of the workout
+</ResponseField>
+
+<ResponseField name="start_time" type="string" required>
+  ISO 8601 timestamp when the workout started
+</ResponseField>
+
+<ResponseField name="end_time" type="string" required>
+  ISO 8601 timestamp when the workout ended
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of last update
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of creation
+</ResponseField>
+
+<ResponseField name="exercises" type="WorkoutExercise[]" required>
+  Array of exercises performed in this workout
+</ResponseField>
+
+---
+
+## WorkoutInput
+
+Input type for creating a new workout.
+
+```typescript
+export interface WorkoutInput {
+  title: string;
+  description?: string | null;
+  start_time: string;
+  end_time: string;
+  is_private?: boolean;
+  exercises: ExerciseInput[];
+}
+```
+
+<ResponseField name="title" type="string" required>
+  Title for the workout
+</ResponseField>
+
+<ResponseField name="description" type="string | null">
+  Optional description for the workout
+</ResponseField>
+
+<ResponseField name="start_time" type="string" required>
+  ISO 8601 timestamp when the workout started
+</ResponseField>
+
+<ResponseField name="end_time" type="string" required>
+  ISO 8601 timestamp when the workout ended
+</ResponseField>
+
+<ResponseField name="is_private" type="boolean">
+  Whether the workout should be private (default: false)
+</ResponseField>
+
+<ResponseField name="exercises" type="ExerciseInput[]" required>
+  Array of exercises to include in the workout
+</ResponseField>
+
+---
+
+## WorkoutExercise
+
+An exercise within a workout, containing sets and metadata.
+
+```typescript
+export interface WorkoutExercise {
+  index: number;
+  title: string;
+  notes: string;
+  exercise_template_id: string;
+  supersets_id: number | null;
+  sets: WorkoutSet[];
+}
+```
+
+<ResponseField name="index" type="number" required>
+  Position of the exercise in the workout (0-indexed)
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Title of the exercise
+</ResponseField>
+
+<ResponseField name="notes" type="string" required>
+  Notes for this exercise
+</ResponseField>
+
+<ResponseField name="exercise_template_id" type="string" required>
+  ID of the exercise template this is based on
+</ResponseField>
+
+<ResponseField name="supersets_id" type="number | null" required>
+  Superset group ID, or null if not part of a superset
+</ResponseField>
+
+<ResponseField name="sets" type="WorkoutSet[]" required>
+  Array of sets performed for this exercise
+</ResponseField>
+
+---
+
+## ExerciseInput
+
+Input type for creating an exercise within a workout.
+
+```typescript
+export interface ExerciseInput {
+  exercise_template_id: string;
+  superset_id?: number | null;
+  notes?: string | null;
+  sets: SetInput[];
+}
+```
+
+<ResponseField name="exercise_template_id" type="string" required>
+  ID of the exercise template to use
+</ResponseField>
+
+<ResponseField name="superset_id" type="number | null">
+  Optional superset group ID
+</ResponseField>
+
+<ResponseField name="notes" type="string | null">
+  Optional notes for this exercise
+</ResponseField>
+
+<ResponseField name="sets" type="SetInput[]" required>
+  Array of sets to perform for this exercise
+</ResponseField>
+
+---
+
+## WorkoutSet
+
+A single set within a workout exercise.
+
+```typescript
+export interface WorkoutSet {
+  index: number;
+  type: SetType;
+  weight_kg: number | null;
+  reps: number | null;
+  distance_meters: number | null;
+  duration_seconds: number | null;
+  rpe: number | null;
+  custom_metric: number | null;
+}
+```
+
+<ResponseField name="index" type="number" required>
+  Position of the set within the exercise (0-indexed)
+</ResponseField>
+
+<ResponseField name="type" type="SetType" required>
+  Type of set: `"normal"`, `"warmup"`, `"dropset"`, or `"failure"`
+</ResponseField>
+
+<ResponseField name="weight_kg" type="number | null" required>
+  Weight used in kilograms, or null if not applicable
+</ResponseField>
+
+<ResponseField name="reps" type="number | null" required>
+  Number of repetitions, or null if not applicable
+</ResponseField>
+
+<ResponseField name="distance_meters" type="number | null" required>
+  Distance in meters, or null if not applicable
+</ResponseField>
+
+<ResponseField name="duration_seconds" type="number | null" required>
+  Duration in seconds, or null if not applicable
+</ResponseField>
+
+<ResponseField name="rpe" type="number | null" required>
+  Rate of Perceived Exertion (RPE), or null if not specified
+</ResponseField>
+
+<ResponseField name="custom_metric" type="number | null" required>
+  Custom metric value, or null if not used
+</ResponseField>
+
+---
+
+## SetInput
+
+Input type for creating a set within an exercise.
+
+```typescript
+export interface SetInput {
+  type: SetType;
+  weight_kg?: number | null;
+  reps?: number | null;
+  distance_meters?: number | null;
+  duration_seconds?: number | null;
+  rpe?: 6 | 7 | 7.5 | 8 | 8.5 | 9 | 9.5 | 10 | null;
+  custom_metric?: number | null;
+}
+```
+
+<ResponseField name="type" type="SetType" required>
+  Type of set: `"normal"`, `"warmup"`, `"dropset"`, or `"failure"`
+</ResponseField>
+
+<ResponseField name="weight_kg" type="number | null">
+  Weight used in kilograms
+</ResponseField>
+
+<ResponseField name="reps" type="number | null">
+  Number of repetitions
+</ResponseField>
+
+<ResponseField name="distance_meters" type="number | null">
+  Distance in meters
+</ResponseField>
+
+<ResponseField name="duration_seconds" type="number | null">
+  Duration in seconds
+</ResponseField>
+
+<ResponseField name="rpe" type="6 | 7 | 7.5 | 8 | 8.5 | 9 | 9.5 | 10 | null">
+  Rate of Perceived Exertion (RPE) value
+</ResponseField>
+
+<ResponseField name="custom_metric" type="number | null">
+  Custom metric value
+</ResponseField>
+
+---
+
+## SetType
+
+Union type for different set types.
+
+```typescript
+export type SetType = "normal" | "warmup" | "dropset" | "failure";
+```
+
+---
+
+## PaginatedWorkouts
+
+Paginated response containing multiple workouts.
+
+```typescript
+export interface PaginatedWorkouts {
+  page: number;
+  page_count: number;
+  workouts: Workout[];
+}
+```
+
+<ResponseField name="page" type="number" required>
+  Current page number (1-indexed)
+</ResponseField>
+
+<ResponseField name="page_count" type="number" required>
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="workouts" type="Workout[]" required>
+  Array of workouts on this page
+</ResponseField>
+
+---
+
+## WorkoutCountResponse
+
+Response containing the total workout count.
+
+```typescript
+export interface WorkoutCountResponse {
+  workout_count: number;
+}
+```
+
+<ResponseField name="workout_count" type="number" required>
+  Total number of workouts
+</ResponseField>
+
+---
+
+## Workout Events
+
+Workout events are used to track changes to workouts over time.
+
+### UpdatedWorkoutEvent
+
+Event emitted when a workout is updated.
+
+```typescript
+export interface UpdatedWorkoutEvent {
+  type: "updated";
+  workout: Workout;
+}
+```
+
+<ResponseField name="type" type="string" required>
+  Event type discriminator (always `"updated"`)
+</ResponseField>
+
+<ResponseField name="workout" type="Workout" required>
+  The updated workout object
+</ResponseField>
+
+### DeletedWorkoutEvent
+
+Event emitted when a workout is deleted.
+
+```typescript
+export interface DeletedWorkoutEvent {
+  type: "deleted";
+  id: string;
+  deleted_at: string;
+}
+```
+
+<ResponseField name="type" type="string" required>
+  Event type discriminator (always `"deleted"`)
+</ResponseField>
+
+<ResponseField name="id" type="string" required>
+  ID of the deleted workout
+</ResponseField>
+
+<ResponseField name="deleted_at" type="string" required>
+  ISO 8601 timestamp when the workout was deleted
+</ResponseField>
+
+### WorkoutEvent
+
+Union type for all workout events.
+
+```typescript
+export type WorkoutEvent = UpdatedWorkoutEvent | DeletedWorkoutEvent;
+```
+
+### PaginatedWorkoutEvents
+
+Paginated response containing workout events.
+
+```typescript
+export interface PaginatedWorkoutEvents {
+  page: number;
+  page_count: number;
+  events: WorkoutEvent[];
+}
+```
+
+<ResponseField name="page" type="number" required>
+  Current page number (1-indexed)
+</ResponseField>
+
+<ResponseField name="page_count" type="number" required>
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="events" type="WorkoutEvent[]" required>
+  Array of workout events on this page
+</ResponseField>

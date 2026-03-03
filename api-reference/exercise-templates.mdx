@@ -1,0 +1,327 @@
+---
+title: 'Exercise Template Tools'
+description: 'MCP tools for browsing Hevy exercise templates - discover available exercises for workouts and routines'
+---
+
+The Hevy HTTP MCP server provides tools for browsing exercise templates. Exercise templates are the foundational exercises available in Hevy (e.g., "Bench Press", "Squat", "Deadlift"). You'll need exercise template IDs when creating workouts and routines.
+
+## get-exercise-templates
+
+Fetch a paginated list of exercise templates available in Hevy.
+
+### Parameters
+
+<ParamField path="page" type="number" optional>
+  Page number (default: 1)
+</ParamField>
+
+<ParamField path="pageSize" type="number" optional>
+  Items per page (default: 10, max: 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="page" type="number">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_count" type="number">
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="exercise_templates" type="array">
+  Array of exercise template objects
+  
+  <Expandable title="Exercise template object">
+    <ResponseField name="id" type="string">
+      Unique exercise template identifier (use this when creating workouts/routines)
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Exercise name (e.g., "Bench Press", "Squat")
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Exercise type (e.g., "weight_reps", "duration", "distance_duration")
+    </ResponseField>
+    
+    <ResponseField name="primary_muscle_group" type="string">
+      Primary muscle group targeted (e.g., "Chest", "Legs")
+    </ResponseField>
+    
+    <ResponseField name="secondary_muscle_groups" type="array">
+      Array of secondary muscle groups targeted
+    </ResponseField>
+    
+    <ResponseField name="is_custom" type="boolean">
+      Whether this is a custom user-created exercise template
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "page": 1,
+  "pageSize": 10
+}
+```
+
+```json Response
+{
+  "page": 1,
+  "page_count": 25,
+  "exercise_templates": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "title": "Bench Press (Barbell)",
+      "type": "weight_reps",
+      "primary_muscle_group": "Chest",
+      "secondary_muscle_groups": [
+        "Triceps",
+        "Shoulders"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440010",
+      "title": "Squat (Barbell)",
+      "type": "weight_reps",
+      "primary_muscle_group": "Legs",
+      "secondary_muscle_groups": [
+        "Glutes",
+        "Core"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440020",
+      "title": "Deadlift (Barbell)",
+      "type": "weight_reps",
+      "primary_muscle_group": "Back",
+      "secondary_muscle_groups": [
+        "Legs",
+        "Glutes",
+        "Core"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440030",
+      "title": "Running",
+      "type": "distance_duration",
+      "primary_muscle_group": "Cardio",
+      "secondary_muscle_groups": [
+        "Legs"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440040",
+      "title": "Plank",
+      "type": "duration",
+      "primary_muscle_group": "Core",
+      "secondary_muscle_groups": [
+        "Shoulders"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440003",
+      "title": "Barbell Row",
+      "type": "weight_reps",
+      "primary_muscle_group": "Back",
+      "secondary_muscle_groups": [
+        "Biceps"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440004",
+      "title": "Cable Row (Seated)",
+      "type": "weight_reps",
+      "primary_muscle_group": "Back",
+      "secondary_muscle_groups": [
+        "Biceps"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440005",
+      "title": "Face Pulls",
+      "type": "weight_reps",
+      "primary_muscle_group": "Shoulders",
+      "secondary_muscle_groups": [
+        "Back"
+      ],
+      "is_custom": false
+    },
+    {
+      "id": "cc0e8400-e29b-41d4-a716-446655440099",
+      "title": "My Custom Exercise",
+      "type": "weight_reps",
+      "primary_muscle_group": "Arms",
+      "secondary_muscle_groups": [],
+      "is_custom": true
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## get-exercise-template
+
+Get a single exercise template by its ID.
+
+### Parameters
+
+<ParamField path="templateId" type="string" required>
+  The exercise template ID
+</ParamField>
+
+### Response
+
+Returns a single exercise template object with the same structure as described in `get-exercise-templates`.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "templateId": "770e8400-e29b-41d4-a716-446655440002"
+}
+```
+
+```json Response
+{
+  "id": "770e8400-e29b-41d4-a716-446655440002",
+  "title": "Bench Press (Barbell)",
+  "type": "weight_reps",
+  "primary_muscle_group": "Chest",
+  "secondary_muscle_groups": [
+    "Triceps",
+    "Shoulders"
+  ],
+  "is_custom": false
+}
+```
+</CodeGroup>
+
+---
+
+## Exercise Types
+
+Exercise templates have different types based on how they're tracked:
+
+<Accordion title="weight_reps">
+  Traditional strength training exercises tracked by weight and repetitions.
+  
+  **Examples:** Bench Press, Squat, Deadlift, Bicep Curls
+  
+  **Fields used:** `weight_kg`, `reps`, `rpe`
+</Accordion>
+
+<Accordion title="duration">
+  Exercises tracked by time duration only.
+  
+  **Examples:** Plank, Wall Sit, Dead Hang
+  
+  **Fields used:** `duration_seconds`
+</Accordion>
+
+<Accordion title="distance_duration">
+  Cardio exercises tracked by distance and time.
+  
+  **Examples:** Running, Cycling, Rowing
+  
+  **Fields used:** `distance_meters`, `duration_seconds`
+</Accordion>
+
+<Accordion title="weight_distance">
+  Exercises tracked by weight and distance.
+  
+  **Examples:** Farmer's Walk, Sled Push
+  
+  **Fields used:** `weight_kg`, `distance_meters`
+</Accordion>
+
+---
+
+## Finding Exercise Templates
+
+When creating workouts or routines, you need to specify the `exercise_template_id`. Here's how to find the right template:
+
+1. **Browse all templates**: Use `get-exercise-templates` with a large page size to see available exercises
+2. **Search by name**: Look through the results for exercises matching your desired movement
+3. **Note the ID**: Copy the `id` field to use when creating workouts or routines
+4. **Check the type**: Ensure you're using the correct fields for the exercise type
+
+### Example Workflow
+
+<CodeGroup>
+```json Step 1: Find Exercise Templates
+// Request
+{
+  "page": 1,
+  "pageSize": 100
+}
+
+// Response - find "Bench Press (Barbell)" in the list
+{
+  "exercise_templates": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "title": "Bench Press (Barbell)",
+      "type": "weight_reps",
+      ...
+    }
+  ]
+}
+```
+
+```json Step 2: Use in Workout
+// Create a workout using the template ID
+{
+  "workout": {
+    "title": "Chest Day",
+    "start_time": "2026-03-03T10:00:00Z",
+    "end_time": "2026-03-03T11:00:00Z",
+    "exercises": [
+      {
+        "exercise_template_id": "770e8400-e29b-41d4-a716-446655440002",
+        "sets": [
+          {
+            "type": "normal",
+            "weight_kg": 100,
+            "reps": 8
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Custom Exercise Templates
+
+Exercise templates with `is_custom: true` are user-created exercises. These work identically to built-in exercises and can be used in workouts and routines the same way.
+
+To identify custom exercises:
+
+```json
+{
+  "id": "cc0e8400-e29b-41d4-a716-446655440099",
+  "title": "My Custom Exercise",
+  "type": "weight_reps",
+  "primary_muscle_group": "Arms",
+  "secondary_muscle_groups": [],
+  "is_custom": true  // This indicates a custom exercise
+}
+```

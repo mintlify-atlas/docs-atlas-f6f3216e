@@ -1,0 +1,79 @@
+---
+title: Introduction
+description: Connect your Hevy workout data to AI applications using the Model Context Protocol
+---
+
+# Hevy HTTP MCP
+
+An HTTP Model Context Protocol (MCP) server for the [Hevy](https://www.hevyapp.com/) workout tracker API. This MCP server exposes all core Hevy API operations as MCP tools over HTTP transport, enabling any MCP-compatible client to connect remotely and interact with your workout data.
+
+<Note>
+This project is inspired by [@chrisdoc's hevy-mcp](https://github.com/chrisdoc/hevy-mcp), with a focus on HTTP transport instead of stdio.
+</Note>
+
+## What you can do
+
+Hevy HTTP MCP enables you to:
+
+- **Query workout history** - Retrieve and analyze your past workouts with pagination support
+- **Manage routines** - Create, update, and organize workout routines programmatically
+- **Access exercise templates** - Browse and filter exercise templates from Hevy's database
+- **Track workout events** - Monitor workout updates and deletions in real-time
+- **Connect to AI chatbots** - Integrate your workout data with AI assistants like [Poke](https://poke.ai) and Claude
+
+## Use cases
+
+- **AI workout assistants** - Let AI chatbots access your workout history to provide personalized training advice
+- **Workout analytics** - Build custom analytics tools that query your Hevy data
+- **Automated routine management** - Create tools to automatically generate and update workout routines
+- **Integration platforms** - Connect Hevy to other fitness tracking or productivity tools
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install dependencies and configure your environment
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get your MCP server running in 5 minutes
+  </Card>
+  <Card title="Configuration" icon="gear" href="/guides/configuration">
+    Configure authentication and server settings
+  </Card>
+  <Card title="Available tools" icon="wrench" href="/api-reference/workouts">
+    Explore all available Hevy API tools
+  </Card>
+</CardGroup>
+
+## Tech stack
+
+Hevy HTTP MCP is built with modern, performant technologies:
+
+- **[Elysia](https://elysiajs.com/)** - Fast and type-safe web framework for Bun
+- **[elysia-mcp](https://github.com/kerlos/elysia-mcp)** - MCP plugin for Elysia
+- **[ofetch](https://github.com/unjs/ofetch)** - HTTP client with automatic retry and error handling
+- **[Bun](https://bun.sh/)** - Fast JavaScript runtime with native TypeScript support
+
+## Requirements
+
+<Info>
+You need a **Hevy Pro** account to access the Hevy API and obtain an API key.
+</Info>
+
+Before you begin, ensure you have:
+
+- Bun v1.0 or higher installed
+- A Hevy Pro account with API access
+- An API key from [Hevy settings](https://hevy.com/settings?developer)
+
+## Architecture
+
+The MCP endpoint runs as an HTTP server on `http://localhost:3000/mcp` by default. All requests are authenticated using API key bearer tokens before reaching any tool handler. Your Hevy API key is only sent server-side to `api.hevyapp.com` and is never exposed to MCP clients.
+
+```
+MCP Client (Claude, Poke, etc.)
+       ↓ (HTTP + Authorization header)
+Hevy HTTP MCP Server
+       ↓ (Hevy API key)
+Hevy API (api.hevyapp.com)
+```

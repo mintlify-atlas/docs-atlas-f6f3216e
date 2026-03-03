@@ -1,0 +1,568 @@
+---
+title: "HevyClient Implementation"
+description: "Detailed documentation of the HevyClient API wrapper and its methods"
+---
+
+The `HevyClient` class is a fully-typed wrapper around the [Hevy API v1](https://api.hevyapp.com/docs/). It uses `ofetch` for HTTP communication and provides a clean, async interface for all Hevy operations.
+
+## Class Structure
+
+```typescript
+export class HevyClient {
+  private readonly fetch: typeof ofetch;
+
+  constructor(
+    private readonly apiKey: string,
+    private readonly logger: Logger,
+  ) {
+    this.fetch = ofetch.create({
+      baseURL: "https://api.hevyapp.com",
+      headers: {
+        "api-key": this.apiKey,
+        Accept: "application/json",
+      },
+      onRequest: ({ request, options }) => {
+        this.logger.debug(`[hevy] ${options.method ?? "GET"} ${String(request)}`);
+      },
+      onResponseError: ({ request, response }) => {
+        this.logger.error(
+          `[hevy] ${response.status} ${response.statusText} for ${String(request)}`,
+          response._data,
+        );
+      },
+    });
+  }
+}
+```
+
+<Info>
+  The client uses **dependency injection** for both the API key and logger. This makes testing easier and keeps the class focused on HTTP communication rather than configuration loading.
+</Info>
+
+## Request/Response Interceptors
+
+The `ofetch` client is configured with two hooks:
+
+### `onRequest`
+
+Logs every outgoing request at `debug` level:
+
+```typescript
+onRequest: ({ request, options }) => {
+  this.logger.debug(`[hevy] ${options.method ?? "GET"} ${String(request)}`);
+}
+```
+
+**Example output:**
+```
+[2026-03-03T10:15:32.123Z] [DEBUG] [hevy] GET https://api.hevyapp.com/v1/workouts?page=1&pageSize=5
+```
+
+### `onResponseError`
+
+Logs failed requests at `error` level with response body:
+
+```typescript
+onResponseError: ({ request, response }) => {
+  this.logger.error(
+    `[hevy] ${response.status} ${response.statusText} for ${String(request)}`,
+    response._data,
+  );
+}
+```
+
+**Example output:**
+```
+[2026-03-03T10:15:32.456Z] [ERROR] [hevy] 404 Not Found for https://api.hevyapp.com/v1/workouts/invalid-id { error: 'Workout not found' }
+```
+
+<Note>
+  Errors are logged but **not swallowed** — the promise still rejects so the calling code can handle it. Error handling is done at the tool layer with `withErrorHandling()`.
+</Note>
+
+## API Methods
+
+All methods are async and return typed promises. They map 1:1 to Hevy API endpoints.
+
+### Workouts
+
+#### `getWorkouts(page?, pageSize?)`
+
+Fetch a paginated list of workouts.
+
+```typescript
+async getWorkouts(page = 1, pageSize = 5): Promise<PaginatedWorkouts> {
+  return this.fetch<PaginatedWorkouts>("/v1/workouts", {
+    query: { page, pageSize },
+  });
+}
+```
+
+**Type signature:**
+```typescript
+interface PaginatedWorkouts {
+  page: number;
+  page_count: number;
+  workouts: Workout[];
+}
+
+interface Workout {
+  id: string;
+  title: string;
+  routine_id: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  updated_at: string;
+  created_at: string;
+  exercises: WorkoutExercise[];
+}
+```
+
+**Example usage:**
+```typescript
+const { workouts, page, page_count } = await hevy.getWorkouts(1, 10);
+console.log(`Fetched ${workouts.length} workouts (page ${page} of ${page_count})`);
+```
+
+---
+
+#### `getWorkout(workoutId)`
+
+Fetch a single workout by ID.
+
+```typescript
+async getWorkout(workoutId: string): Promise<Workout> {
+  return this.fetch<Workout>(`/v1/workouts/${workoutId}`);
+}
+```
+
+**Example usage:**
+```typescript
+const workout = await hevy.getWorkout("550e8400-e29b-41d4-a716-446655440000");
+console.log(`${workout.title} - ${workout.exercises.length} exercises`);
+```
+
+---
+
+#### `createWorkout(workout)`
+
+Create a new workout.
+
+```typescript
+async createWorkout(workout: WorkoutInput): Promise<Workout> {
+  return this.fetch<Workout>("/v1/workouts", {
+    method: "POST",
+    body: { workout },
+  });
+}
+```
+
+**Type signature:**
+```typescript
+interface WorkoutInput {
+  title: string;
+  description?: string | null;
+  start_time: string;  // ISO 8601 format
+  end_time: string;    // ISO 8601 format
+  is_private?: boolean;
+  exercises: ExerciseInput[];
+}
+
+interface ExerciseInput {
+  exercise_template_id: string;
+  superset_id?: number | null;
+  notes?: string | null;
+  sets: SetInput[];
+}
+
+interface SetInput {
+  type: "normal" | "warmup" | "dropset" | "failure";
+  weight_kg?: number | null;
+  reps?: number | null;
+  distance_meters?: number | null;
+  duration_seconds?: number | null;
+  rpe?: 6 | 7 | 7.5 | 8 | 8.5 | 9 | 9.5 | 10 | null;
+  custom_metric?: number | null;
+}
+```
+
+**Example usage:**
+```typescript
+const newWorkout = await hevy.createWorkout({
+  title: "Push Day",
+  description: "Chest and triceps",
+  start_time: "2026-03-03T10:00:00Z",
+  end_time: "2026-03-03T11:30:00Z",
+  exercises: [
+    {
+      exercise_template_id: "bench-press-id",
+      notes: "Felt strong today",
+      sets: [
+        { type: "warmup", weight_kg: 60, reps: 10 },
+        { type: "normal", weight_kg: 80, reps: 8, rpe: 8 },
+        { type: "normal", weight_kg: 80, reps: 6, rpe: 9 },
+      ],
+    },
+  ],
+});
+```
+
+---
+
+#### `updateWorkout(workoutId, workout)`
+
+Update an existing workout.
+
+```typescript
+async updateWorkout(workoutId: string, workout: WorkoutInput): Promise<Workout> {
+  return this.fetch<Workout>(`/v1/workouts/${workoutId}`, {
+    method: "PUT",
+    body: { workout },
+  });
+}
+```
+
+<Note>
+  The Hevy API requires the **entire workout object** to be sent, not just the fields you want to change. Fetch the workout first, modify it, then send the updated version.
+</Note>
+
+---
+
+#### `getWorkoutCount()`
+
+Get the total number of workouts.
+
+```typescript
+async getWorkoutCount(): Promise<WorkoutCountResponse> {
+  return this.fetch<WorkoutCountResponse>("/v1/workouts/count");
+}
+```
+
+**Type signature:**
+```typescript
+interface WorkoutCountResponse {
+  workout_count: number;
+}
+```
+
+---
+
+#### `getWorkoutEvents(page?, pageSize?, since?)`
+
+Fetch workout update/delete events (useful for syncing).
+
+```typescript
+async getWorkoutEvents(
+  page = 1,
+  pageSize = 5,
+  since?: string,
+): Promise<PaginatedWorkoutEvents> {
+  const query: Record<string, unknown> = { page, pageSize };
+  if (since) query.since = since;
+  return this.fetch<PaginatedWorkoutEvents>("/v1/workouts/events", { query });
+}
+```
+
+**Type signature:**
+```typescript
+interface PaginatedWorkoutEvents {
+  page: number;
+  page_count: number;
+  events: WorkoutEvent[];
+}
+
+type WorkoutEvent = UpdatedWorkoutEvent | DeletedWorkoutEvent;
+
+interface UpdatedWorkoutEvent {
+  type: "updated";
+  workout: Workout;
+}
+
+interface DeletedWorkoutEvent {
+  type: "deleted";
+  id: string;
+  deleted_at: string;
+}
+```
+
+**Example usage:**
+```typescript
+// Get all events since yesterday
+const yesterday = new Date(Date.now() - 86400000).toISOString();
+const { events } = await hevy.getWorkoutEvents(1, 10, yesterday);
+
+for (const event of events) {
+  if (event.type === "updated") {
+    console.log(`Updated: ${event.workout.title}`);
+  } else {
+    console.log(`Deleted: ${event.id}`);
+  }
+}
+```
+
+### Routines
+
+#### `getRoutines(page?, pageSize?)`
+
+Fetch a paginated list of routines.
+
+```typescript
+async getRoutines(page = 1, pageSize = 5): Promise<PaginatedRoutines> {
+  return this.fetch<PaginatedRoutines>("/v1/routines", {
+    query: { page, pageSize },
+  });
+}
+```
+
+---
+
+#### `getRoutineById(routineId)`
+
+Fetch a single routine by ID.
+
+```typescript
+async getRoutineById(routineId: string): Promise<{ routine: Routine }> {
+  return this.fetch<{ routine: Routine }>(`/v1/routines/${routineId}`);
+}
+```
+
+<Note>
+  Unlike `getWorkout()`, this method returns `{ routine: Routine }` (wrapped in an object) rather than the routine directly. This matches the Hevy API's response format.
+</Note>
+
+---
+
+#### `createRoutine(routine)`
+
+Create a new routine.
+
+```typescript
+async createRoutine(routine: RoutineCreateInput): Promise<Routine> {
+  return this.fetch<Routine>("/v1/routines", {
+    method: "POST",
+    body: { routine },
+  });
+}
+```
+
+**Type signature:**
+```typescript
+interface RoutineCreateInput {
+  title: string;
+  folder_id?: number | null;
+  notes?: string | null;
+  exercises: RoutineExerciseInput[];
+}
+
+interface RoutineExerciseInput {
+  exercise_template_id: string;
+  superset_id?: number | null;
+  rest_seconds?: number | null;
+  notes?: string | null;
+  sets: RoutineSetInput[];
+}
+
+interface RoutineSetInput {
+  type: "normal" | "warmup" | "dropset" | "failure";
+  weight_kg?: number | null;
+  reps?: number | null;
+  distance_meters?: number | null;
+  duration_seconds?: number | null;
+  custom_metric?: number | null;
+  rep_range?: { start: number; end: number } | null;
+}
+```
+
+---
+
+#### `updateRoutine(routineId, routine)`
+
+Update an existing routine.
+
+```typescript
+async updateRoutine(routineId: string, routine: RoutineUpdateInput): Promise<Routine> {
+  return this.fetch<Routine>(`/v1/routines/${routineId}`, {
+    method: "PUT",
+    body: { routine },
+  });
+}
+```
+
+### Exercise Templates
+
+#### `getExerciseTemplates(page?, pageSize?)`
+
+Fetch a paginated list of exercise templates.
+
+```typescript
+async getExerciseTemplates(
+  page = 1,
+  pageSize = 10,
+): Promise<PaginatedExerciseTemplates> {
+  return this.fetch<PaginatedExerciseTemplates>("/v1/exercise_templates", {
+    query: { page, pageSize },
+  });
+}
+```
+
+**Type signature:**
+```typescript
+interface ExerciseTemplate {
+  id: string;
+  title: string;
+  type: string;
+  primary_muscle_group: string;
+  secondary_muscle_groups: string[];
+  is_custom: boolean;
+}
+```
+
+---
+
+#### `getExerciseTemplate(templateId)`
+
+Fetch a single exercise template by ID.
+
+```typescript
+async getExerciseTemplate(templateId: string): Promise<ExerciseTemplate> {
+  return this.fetch<ExerciseTemplate>(`/v1/exercise_templates/${templateId}`);
+}
+```
+
+### Routine Folders
+
+#### `getRoutineFolders(page?, pageSize?)`
+
+Fetch a paginated list of routine folders.
+
+```typescript
+async getRoutineFolders(page = 1, pageSize = 5): Promise<PaginatedRoutineFolders> {
+  return this.fetch<PaginatedRoutineFolders>("/v1/routine_folders", {
+    query: { page, pageSize },
+  });
+}
+```
+
+---
+
+#### `createRoutineFolder(title)`
+
+Create a new routine folder.
+
+```typescript
+async createRoutineFolder(title: string): Promise<RoutineFolder> {
+  return this.fetch<RoutineFolder>("/v1/routine_folders", {
+    method: "POST",
+    body: { routine_folder: { title } },
+  });
+}
+```
+
+---
+
+#### `getRoutineFolder(folderId)`
+
+Fetch a single routine folder by ID.
+
+```typescript
+async getRoutineFolder(folderId: number): Promise<RoutineFolder> {
+  return this.fetch<RoutineFolder>(`/v1/routine_folders/${folderId}`);
+}
+```
+
+**Type signature:**
+```typescript
+interface RoutineFolder {
+  id: number;
+  index: number;
+  title: string;
+  updated_at: string;
+  created_at: string;
+}
+```
+
+## Error Handling
+
+The `HevyClient` does **not** catch errors — it lets them propagate to the calling code. This is intentional:
+
+1. **Logging happens in interceptors** — errors are already logged via `onResponseError`
+2. **Tool handlers wrap calls** — the `withErrorHandling()` helper converts errors to MCP responses
+3. **Callers can distinguish errors** — different status codes may require different handling
+
+```typescript
+// The client throws FetchError on non-2xx responses
+try {
+  const workout = await hevy.getWorkout("invalid-id");
+} catch (err) {
+  if (err.response?.status === 404) {
+    console.log("Workout not found");
+  } else {
+    console.error("Unexpected error:", err);
+  }
+}
+```
+
+For details on how errors are handled at the tool layer, see [Error Handling](/architecture/error-handling).
+
+## Type Definitions
+
+All types are defined in `hevy/types.ts` and exported from `hevy/index.ts`. They're based on the [Hevy API OpenAPI specification](https://api.hevyapp.com/docs/).
+
+<Tabs>
+  <Tab title="Import Pattern">
+    ```typescript
+    import type {
+      Workout,
+      WorkoutInput,
+      PaginatedWorkouts,
+      Routine,
+      ExerciseTemplate,
+    } from "./hevy/types";
+    ```
+  </Tab>
+  <Tab title="Type Hierarchy">
+    ```typescript
+    // Workouts contain exercises, exercises contain sets
+    Workout
+      └─ WorkoutExercise[]
+           └─ WorkoutSet[]
+
+    // Routines are templates for workouts
+    Routine
+      └─ RoutineExercise[]
+           └─ RoutineSet[]
+
+    // Exercise templates are reusable exercise definitions
+    ExerciseTemplate
+      ├─ primary_muscle_group
+      └─ secondary_muscle_groups[]
+
+    // Routine folders organize routines
+    RoutineFolder
+      └─ Routine[] (via folder_id)
+    ```
+  </Tab>
+</Tabs>
+
+## Testing
+
+The client is designed to be easily mockable:
+
+```typescript
+// Create a mock client for testing
+const mockHevy: HevyClient = {
+  getWorkouts: vi.fn().mockResolvedValue({
+    page: 1,
+    page_count: 1,
+    workouts: [/* ... */],
+  }),
+  getWorkout: vi.fn().mockResolvedValue({ id: "123", title: "Test" }),
+  // ...
+};
+
+// Pass it to tool registration
+registerWorkoutTools(server, mockHevy, logger);
+```
+
+No network calls are made during tests — the mock client returns predefined responses.

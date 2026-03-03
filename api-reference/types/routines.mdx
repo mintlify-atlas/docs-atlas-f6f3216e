@@ -1,0 +1,303 @@
+---
+title: Routine Types
+description: TypeScript type definitions for routine-related data structures
+---
+
+## Routine
+
+The main routine object returned by the API.
+
+```typescript
+export interface Routine {
+  id: string;
+  title: string;
+  folder_id: number | null;
+  updated_at: string;
+  created_at: string;
+  exercises: RoutineExercise[];
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Unique identifier for the routine
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Title of the routine
+</ResponseField>
+
+<ResponseField name="folder_id" type="number | null" required>
+  ID of the folder containing this routine, or null if not in a folder
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  ISO 8601 timestamp of last update
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  ISO 8601 timestamp of creation
+</ResponseField>
+
+<ResponseField name="exercises" type="RoutineExercise[]" required>
+  Array of exercises in this routine
+</ResponseField>
+
+---
+
+## RoutineCreateInput
+
+Input type for creating a new routine.
+
+```typescript
+export interface RoutineCreateInput {
+  title: string;
+  folder_id?: number | null;
+  notes?: string | null;
+  exercises: RoutineExerciseInput[];
+}
+```
+
+<ResponseField name="title" type="string" required>
+  Title for the routine
+</ResponseField>
+
+<ResponseField name="folder_id" type="number | null">
+  Optional folder ID to organize the routine
+</ResponseField>
+
+<ResponseField name="notes" type="string | null">
+  Optional notes for the routine
+</ResponseField>
+
+<ResponseField name="exercises" type="RoutineExerciseInput[]" required>
+  Array of exercises to include in the routine
+</ResponseField>
+
+---
+
+## RoutineUpdateInput
+
+Input type for updating an existing routine.
+
+```typescript
+export interface RoutineUpdateInput {
+  title: string;
+  notes?: string | null;
+  exercises: RoutineExerciseInput[];
+}
+```
+
+<ResponseField name="title" type="string" required>
+  Updated title for the routine
+</ResponseField>
+
+<ResponseField name="notes" type="string | null">
+  Optional updated notes for the routine
+</ResponseField>
+
+<ResponseField name="exercises" type="RoutineExerciseInput[]" required>
+  Updated array of exercises in the routine
+</ResponseField>
+
+---
+
+## RoutineExercise
+
+An exercise within a routine, containing planned sets and metadata.
+
+```typescript
+export interface RoutineExercise {
+  index: number;
+  title: string;
+  rest_seconds: string;
+  notes: string;
+  exercise_template_id: string;
+  supersets_id: number | null;
+  sets: RoutineSet[];
+}
+```
+
+<ResponseField name="index" type="number" required>
+  Position of the exercise in the routine (0-indexed)
+</ResponseField>
+
+<ResponseField name="title" type="string" required>
+  Title of the exercise
+</ResponseField>
+
+<ResponseField name="rest_seconds" type="string" required>
+  Rest time in seconds between sets (stored as string)
+</ResponseField>
+
+<ResponseField name="notes" type="string" required>
+  Notes for this exercise
+</ResponseField>
+
+<ResponseField name="exercise_template_id" type="string" required>
+  ID of the exercise template this is based on
+</ResponseField>
+
+<ResponseField name="supersets_id" type="number | null" required>
+  Superset group ID, or null if not part of a superset
+</ResponseField>
+
+<ResponseField name="sets" type="RoutineSet[]" required>
+  Array of planned sets for this exercise
+</ResponseField>
+
+---
+
+## RoutineExerciseInput
+
+Input type for creating an exercise within a routine.
+
+```typescript
+export interface RoutineExerciseInput {
+  exercise_template_id: string;
+  superset_id?: number | null;
+  rest_seconds?: number | null;
+  notes?: string | null;
+  sets: RoutineSetInput[];
+}
+```
+
+<ResponseField name="exercise_template_id" type="string" required>
+  ID of the exercise template to use
+</ResponseField>
+
+<ResponseField name="superset_id" type="number | null">
+  Optional superset group ID
+</ResponseField>
+
+<ResponseField name="rest_seconds" type="number | null">
+  Optional rest time in seconds between sets
+</ResponseField>
+
+<ResponseField name="notes" type="string | null">
+  Optional notes for this exercise
+</ResponseField>
+
+<ResponseField name="sets" type="RoutineSetInput[]" required>
+  Array of planned sets for this exercise
+</ResponseField>
+
+---
+
+## RoutineSet
+
+A planned set within a routine exercise.
+
+```typescript
+export interface RoutineSet extends RoutineSetInput {
+  index: number;
+  rpe: number | null;
+}
+```
+
+<ResponseField name="index" type="number" required>
+  Position of the set within the exercise (0-indexed)
+</ResponseField>
+
+<ResponseField name="type" type="SetType" required>
+  Type of set: `"normal"`, `"warmup"`, `"dropset"`, or `"failure"`
+</ResponseField>
+
+<ResponseField name="weight_kg" type="number | null">
+  Planned weight in kilograms
+</ResponseField>
+
+<ResponseField name="reps" type="number | null">
+  Planned number of repetitions
+</ResponseField>
+
+<ResponseField name="distance_meters" type="number | null">
+  Planned distance in meters
+</ResponseField>
+
+<ResponseField name="duration_seconds" type="number | null">
+  Planned duration in seconds
+</ResponseField>
+
+<ResponseField name="custom_metric" type="number | null">
+  Planned custom metric value
+</ResponseField>
+
+<ResponseField name="rep_range" type="{ start: number; end: number } | null">
+  Optional rep range with start and end values
+</ResponseField>
+
+<ResponseField name="rpe" type="number | null" required>
+  Rate of Perceived Exertion (RPE), or null if not specified
+</ResponseField>
+
+---
+
+## RoutineSetInput
+
+Input type for creating a planned set within a routine exercise.
+
+```typescript
+export interface RoutineSetInput {
+  type: SetType;
+  weight_kg?: number | null;
+  reps?: number | null;
+  distance_meters?: number | null;
+  duration_seconds?: number | null;
+  custom_metric?: number | null;
+  rep_range?: { start: number; end: number } | null;
+}
+```
+
+<ResponseField name="type" type="SetType" required>
+  Type of set: `"normal"`, `"warmup"`, `"dropset"`, or `"failure"`
+</ResponseField>
+
+<ResponseField name="weight_kg" type="number | null">
+  Planned weight in kilograms
+</ResponseField>
+
+<ResponseField name="reps" type="number | null">
+  Planned number of repetitions
+</ResponseField>
+
+<ResponseField name="distance_meters" type="number | null">
+  Planned distance in meters
+</ResponseField>
+
+<ResponseField name="duration_seconds" type="number | null">
+  Planned duration in seconds
+</ResponseField>
+
+<ResponseField name="custom_metric" type="number | null">
+  Planned custom metric value
+</ResponseField>
+
+<ResponseField name="rep_range" type="{ start: number; end: number } | null">
+  Optional rep range with start and end values
+</ResponseField>
+
+---
+
+## PaginatedRoutines
+
+Paginated response containing multiple routines.
+
+```typescript
+export interface PaginatedRoutines {
+  page: number;
+  page_count: number;
+  routines: Routine[];
+}
+```
+
+<ResponseField name="page" type="number" required>
+  Current page number (1-indexed)
+</ResponseField>
+
+<ResponseField name="page_count" type="number" required>
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="routines" type="Routine[]" required>
+  Array of routines on this page
+</ResponseField>

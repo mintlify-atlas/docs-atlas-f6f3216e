@@ -1,0 +1,345 @@
+---
+title: Client Setup
+description: Connect Hevy HTTP MCP to Claude Desktop, Cursor, Poke, and other MCP clients
+---
+
+## Overview
+
+Hevy HTTP MCP uses the HTTP transport protocol, making it compatible with any MCP client that supports remote servers. This guide covers setup for the most popular clients.
+
+<Note>
+  Make sure your Hevy HTTP MCP server is running before configuring clients. See the [Quick Start](/quickstart) guide.
+</Note>
+
+## Prerequisites
+
+Before configuring any client, ensure:
+
+1. Your server is running: `bun run start`
+2. You know your server URL (default: `http://localhost:3000/mcp`)
+3. You have your `MCP_API_KEY` from your `.env` file
+
+## Claude Desktop
+
+Claude Desktop supports HTTP MCP servers through the Streamable HTTP transport.
+
+### Configuration File
+
+Edit your Claude Desktop MCP configuration file:
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    ~/Library/Application Support/Claude/claude_desktop_config.json
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    ```bash
+    %APPDATA%/Claude/claude_desktop_config.json
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    ```bash
+    ~/.config/Claude/claude_desktop_config.json
+    ```
+  </Tab>
+</Tabs>
+
+### Add Hevy Server
+
+Add the following configuration to your `mcpServers` object:
+
+```json
+{
+  "mcpServers": {
+    "hevy": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-mcp-api-key>"
+      }
+    }
+  }
+}
+```
+
+<Warning>
+  Replace `<your-mcp-api-key>` with the actual `MCP_API_KEY` from your `.env` file.
+</Warning>
+
+### Complete Example
+
+If you have multiple MCP servers:
+
+```json
+{
+  "mcpServers": {
+    "hevy": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer sk_live_a1b2c3d4e5f6g7h8"
+      }
+    },
+    "other-server": {
+      "command": "node",
+      "args": ["/path/to/other/server.js"]
+    }
+  }
+}
+```
+
+### Restart Claude Desktop
+
+After saving the configuration:
+
+1. Quit Claude Desktop completely
+2. Restart the application
+3. Verify the Hevy tools appear in the MCP tools list
+
+## Cursor
+
+Cursor uses the same configuration format as Claude Desktop.
+
+### Configuration File
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    ~/Library/Application Support/Cursor/User/globalStorage/mcp.json
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    ```bash
+    %APPDATA%/Cursor/User/globalStorage/mcp.json
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    ```bash
+    ~/.config/Cursor/User/globalStorage/mcp.json
+    ```
+  </Tab>
+</Tabs>
+
+### Add Hevy Server
+
+```json
+{
+  "mcpServers": {
+    "hevy": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-mcp-api-key>"
+      }
+    }
+  }
+}
+```
+
+### Reload Cursor
+
+1. Save the configuration file
+2. Open the command palette (Cmd/Ctrl+Shift+P)
+3. Run: "Developer: Reload Window"
+4. The Hevy tools should now be available
+
+## Poke
+
+[Poke](https://poke.ai) is a mobile AI assistant that supports HTTP MCP servers.
+
+### Setup in Poke App
+
+1. Open the Poke app on your mobile device
+2. Navigate to Settings → MCP Servers
+3. Tap "Add Server"
+4. Configure with these settings:
+
+<ParamField path="Name" type="string">
+  ```
+  Hevy Workout Tracker
+  ```
+</ParamField>
+
+<ParamField path="URL" type="string">
+  ```
+  http://your-server-ip:3000/mcp
+  ```
+  
+  <Note>
+    Replace `your-server-ip` with your computer's local IP address (find it with `ipconfig` on Windows or `ifconfig` on macOS/Linux). You cannot use `localhost` from a mobile device.
+  </Note>
+</ParamField>
+
+<ParamField path="Authorization Header" type="string">
+  ```
+  Bearer <your-mcp-api-key>
+  ```
+</ParamField>
+
+### Network Requirements
+
+<Warning>
+  Your mobile device must be on the same network as your computer running Hevy HTTP MCP.
+</Warning>
+
+For Poke to connect:
+
+1. **Same WiFi network**: Both devices on the same local network
+2. **Server binding**: Set `HOST=0.0.0.0` in your `.env` file to accept non-localhost connections
+3. **Firewall**: Ensure port 3000 (or your custom port) is not blocked
+
+### Finding Your Local IP
+
+<Tabs>
+  <Tab title="macOS">
+    ```bash
+    ifconfig | grep "inet " | grep -v 127.0.0.1
+    ```
+  </Tab>
+  
+  <Tab title="Windows">
+    ```bash
+    ipconfig | findstr IPv4
+    ```
+  </Tab>
+  
+  <Tab title="Linux">
+    ```bash
+    hostname -I | awk '{print $1}'
+    ```
+  </Tab>
+</Tabs>
+
+Use the IP address that starts with `192.168.` or `10.`
+
+## Other MCP Clients
+
+Any MCP client that supports HTTP transport can connect to Hevy HTTP MCP.
+
+### Generic Configuration
+
+Provide these values to your client:
+
+```yaml
+Server URL: http://localhost:3000/mcp
+Transport: HTTP
+Authentication: Bearer Token
+Authorization Header: Bearer <your-mcp-api-key>
+```
+
+### Testing with MCP Inspector
+
+Use the MCP Inspector to verify your server:
+
+```bash
+bun run inspect
+```
+
+This opens a web UI at `http://localhost:5173` where you can:
+- View all available tools
+- Test tool invocations
+- Inspect request/response payloads
+- Debug authentication issues
+
+## Troubleshooting
+
+### Server Not Reachable
+
+<CodeGroup>
+
+```bash Verify server is running
+bun run start
+# Should output: hevy-http-mcp listening on http://127.0.0.1:3000/mcp
+```
+
+```bash Test connection
+curl http://localhost:3000/mcp
+# Should return 401 error (expected without auth header)
+```
+
+```bash Check port availability
+lsof -i :3000
+# Should show the Bun process if server is running
+```
+
+</CodeGroup>
+
+### Authentication Failures
+
+<Note>
+  Make sure you're using the exact `MCP_API_KEY` from your `.env` file, including the "Bearer " prefix in the header.
+</Note>
+
+Test authentication:
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Authorization: Bearer your_mcp_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/list"}'
+```
+
+If this returns tools, authentication is working.
+
+### Tools Not Appearing
+
+1. **Restart the client**: Most clients require a restart to load new MCP servers
+2. **Check logs**: Run server with `LOG_LEVEL=debug` to see detailed logs
+   ```bash
+   LOG_LEVEL=debug bun run start
+   ```
+3. **Verify JSON syntax**: Use a JSON validator to check your config file
+4. **Check server logs**: Look for "All Hevy MCP tools registered" message
+
+### Mobile Device Connection Issues (Poke)
+
+<CodeGroup>
+
+```bash Verify server accepts external connections
+# In .env
+HOST=0.0.0.0
+```
+
+```bash Test from mobile network
+# On your computer, find your IP
+ifconfig | grep "inet "
+
+# From mobile browser, visit:
+http://192.168.1.100:3000/mcp
+# (replace with your IP)
+```
+
+```bash Check firewall
+# macOS
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate
+
+# Linux
+sudo ufw status
+```
+
+</CodeGroup>
+
+## Remote Access
+
+<Warning>
+  Running MCP servers over the public internet requires additional security measures. This is not recommended unless you understand the risks.
+</Warning>
+
+For secure remote access:
+
+1. **Use a VPN**: Connect both devices through a VPN like Tailscale or WireGuard
+2. **Reverse proxy with HTTPS**: Use nginx or Caddy with Let's Encrypt certificates
+3. **SSH tunnel**: Forward the port through an SSH connection
+   ```bash
+   ssh -L 3000:localhost:3000 user@your-server
+   ```
+
+## Next Steps
+
+Once your client is configured:
+
+1. Try listing your workouts with the `get-workouts` tool
+2. Explore the [Tools Reference](/api-reference/workouts) to see all available operations
+3. Check the [Authentication](/guides/authentication) guide for security best practices

@@ -1,0 +1,197 @@
+---
+title: Authentication
+description: Secure your Hevy HTTP MCP server with bearer token authentication
+---
+
+## Overview
+
+Hevy HTTP MCP uses bearer token authentication to protect the MCP endpoint from unauthorized access. Every request to `/mcp` must include your `MCP_API_KEY` in the `Authorization` header.
+
+## How Authentication Works
+
+The server implements a custom authentication handler that:
+
+1. Checks for the `Authorization` header in incoming requests
+2. Extracts the token (supports both `Bearer <token>` format and raw token)
+3. Validates the token against the configured `MCP_API_KEY`
+4. Returns appropriate error responses for missing or invalid tokens
+
+## Authentication Flow
+
+Here's the authentication implementation from the server:
+
+```typescript
+authentication: async (ctx) => {
+  const authHeader =
+    ctx.request.headers.get("Authorization") ??
+    ctx.request.headers.get("authorization");
+
+  if (!authHeader) {
+    return {
+      response: new Response(
+        JSON.stringify({ error: "Missing Authorization header" }),
+        { status: 401, headers: { "Content-Type": "application/json" } },
+      ),
+    };
+  }
+
+  // Accept "Bearer <key>" or just the raw key
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : authHeader;
+
+  if (token !== config.mcpApiKey) {
+    return {
+      response: new Response(
+        JSON.stringify({ error: "Invalid API key" }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      ),
+    };
+  }
+
+  return {
+    authInfo: {
+      token,
+      clientId: "mcp-client",
+      scopes: ["hevy:read", "hevy:write"],
+    },
+  };
+}
+```
+
+## Authorization Header Formats
+
+The server accepts two formats for the `Authorization` header:
+
+<Tabs>
+  <Tab title="Bearer Token (Recommended)">
+    Standard bearer token format:
+    
+    ```http
+    Authorization: Bearer your_mcp_api_key_here
+    ```
+    
+    This is the recommended format and is used by most MCP clients.
+  </Tab>
+  
+  <Tab title="Raw Token">
+    Raw API key without the "Bearer" prefix:
+    
+    ```http
+    Authorization: your_mcp_api_key_here
+    ```
+    
+    The server automatically detects and accepts this format for compatibility.
+  </Tab>
+</Tabs>
+
+## Response Codes
+
+<ParamField path="401 Unauthorized" type="error">
+  Returned when the `Authorization` header is missing from the request.
+  
+  ```json
+  { "error": "Missing Authorization header" }
+  ```
+</ParamField>
+
+<ParamField path="403 Forbidden" type="error">
+  Returned when the provided API key doesn't match the configured `MCP_API_KEY`.
+  
+  ```json
+  { "error": "Invalid API key" }
+  ```
+</ParamField>
+
+<ParamField path="200 OK" type="success">
+  Authentication successful. The request proceeds to the MCP tool handler.
+</ParamField>
+
+## Testing Authentication
+
+You can test authentication using curl:
+
+### Valid Request
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Authorization: Bearer your_mcp_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/list"}'
+```
+
+### Missing Header
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/list"}'
+
+# Response: {"error": "Missing Authorization header"}
+```
+
+### Invalid Key
+
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Authorization: Bearer wrong_key" \
+  -H "Content-Type: application/json" \
+  -d '{"method": "tools/list"}'
+
+# Response: {"error": "Invalid API key"}
+```
+
+## Security Considerations
+
+<Warning>
+  Your `MCP_API_KEY` provides full access to all Hevy MCP tools. Protect it like a password.
+</Warning>
+
+### Key Management
+
+- **Generate strong keys**: Use at least 32 characters of random data
+  ```bash
+  openssl rand -hex 32
+  ```
+
+- **Never commit keys**: The `.env` file is gitignored by default. Keep it that way.
+
+- **Rotate regularly**: Change your `MCP_API_KEY` periodically or if compromised
+
+- **Use environment variables**: Never hardcode keys in client configurations that might be shared
+
+### Network Security
+
+<Note>
+  This server uses HTTP, not HTTPS. For production deployments, place it behind a reverse proxy (nginx, Caddy) with TLS enabled.
+</Note>
+
+- **Local development**: Binding to `127.0.0.1` (default) only accepts connections from your machine
+- **Remote access**: If using `HOST=0.0.0.0`, ensure you're behind a firewall or VPN
+- **Production**: Always use HTTPS in production environments to encrypt the `Authorization` header in transit
+
+### Access Scopes
+
+When authentication succeeds, the server assigns these scopes to the authenticated client:
+
+```typescript
+scopes: ["hevy:read", "hevy:write"]
+```
+
+This indicates the client has both read and write access to all Hevy tools. Currently, there's no granular scope restriction—a valid `MCP_API_KEY` grants full access.
+
+## Hevy API Key Security
+
+<Note>
+  Your `HEVY_API_KEY` is never exposed to MCP clients. It's only used server-side when making requests to `api.hevyapp.com`.
+</Note>
+
+The authentication system creates a security boundary:
+
+1. **Client → MCP Server**: Authenticated with `MCP_API_KEY`
+2. **MCP Server → Hevy API**: Authenticated with `HEVY_API_KEY`
+
+This two-tier authentication ensures:
+- Clients never see your Hevy API credentials
+- You can revoke MCP client access without changing your Hevy API key
+- Multiple clients can share one MCP server with a single `MCP_API_KEY`

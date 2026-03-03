@@ -1,0 +1,137 @@
+---
+title: Configuration
+description: Configure Hevy HTTP MCP with environment variables for seamless integration
+---
+
+## Overview
+
+Hevy HTTP MCP is configured entirely through environment variables. All credentials and server settings are loaded from a `.env` file or your system environment, ensuring no secrets are committed to your codebase.
+
+## Environment Setup
+
+Create a `.env` file in your project root:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your actual values.
+
+## Required Variables
+
+<ParamField path="HEVY_API_KEY" type="string" required>
+  Your Hevy API key for authenticating with the Hevy API. 
+  
+  **How to get it:** Visit [hevy.com/settings?developer](https://hevy.com/settings?developer) (requires Hevy Pro subscription)
+  
+  ```bash
+  HEVY_API_KEY=your_hevy_api_key_here
+  ```
+</ParamField>
+
+<ParamField path="MCP_API_KEY" type="string" required>
+  A secret key that MCP clients must send to access this server. Choose any secure random string.
+  
+  <Warning>
+    This key protects your MCP server from unauthorized access. Use a strong, randomly generated value.
+  </Warning>
+  
+  ```bash
+  MCP_API_KEY=your_mcp_access_key_here
+  ```
+</ParamField>
+
+## Optional Variables
+
+<ParamField path="PORT" type="number" default="3000">
+  HTTP port the server listens on.
+  
+  ```bash
+  PORT=3000
+  ```
+</ParamField>
+
+<ParamField path="HOST" type="string" default="127.0.0.1">
+  Hostname to bind to. Use `0.0.0.0` to listen on all network interfaces.
+  
+  ```bash
+  HOST=127.0.0.1
+  ```
+  
+  <Note>
+    For local development, use `127.0.0.1`. For remote access or Docker deployments, use `0.0.0.0`.
+  </Note>
+</ParamField>
+
+<ParamField path="LOG_LEVEL" type="string" default="info">
+  Logging verbosity level.
+  
+  **Options:** `debug` | `info` | `warn` | `error`
+  
+  ```bash
+  LOG_LEVEL=info
+  ```
+</ParamField>
+
+## Complete Example
+
+Here's a complete `.env` file with all variables:
+
+```bash
+# Required
+HEVY_API_KEY=your_hevy_api_key_here
+MCP_API_KEY=your_mcp_access_key_here
+
+# Optional (these are the defaults)
+PORT=3000
+HOST=127.0.0.1
+LOG_LEVEL=info
+```
+
+## Configuration Loading
+
+The server validates all required environment variables at startup. If any required variable is missing, the server will exit with an error message:
+
+```typescript
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    console.error(`[config] Missing required environment variable: ${name}`);
+    process.exit(1);
+  }
+  return value;
+}
+```
+
+## Security Best Practices
+
+<Warning>
+  Never commit your `.env` file to version control. The `.env` file is gitignored by default.
+</Warning>
+
+- **Generate strong keys**: Use a password manager or `openssl rand -hex 32` to generate secure API keys
+- **Rotate regularly**: Change your `MCP_API_KEY` periodically, especially if you suspect it's been compromised
+- **Restrict access**: Keep your `HEVY_API_KEY` private—it provides full access to your Hevy workout data
+- **Use environment-specific configs**: Use different `.env` files for development, staging, and production
+
+## Verifying Configuration
+
+After configuring your environment variables, start the server:
+
+```bash
+bun run start
+```
+
+You should see output confirming the configuration:
+
+```
+[info] Starting hevy-http-mcp server…
+[info] All Hevy MCP tools registered
+[info] hevy-http-mcp listening on http://127.0.0.1:3000/mcp
+```
+
+If any required variables are missing, you'll see an error immediately:
+
+```
+[config] Missing required environment variable: HEVY_API_KEY
+```

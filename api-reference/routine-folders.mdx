@@ -1,0 +1,304 @@
+---
+title: 'Routine Folder Tools'
+description: 'MCP tools for managing Hevy routine folders - organize routines into folders'
+---
+
+The Hevy HTTP MCP server provides tools for managing routine folders. Folders help you organize your routines into logical groups (e.g., "Push/Pull/Legs", "Powerlifting", "Bodybuilding").
+
+## get-routine-folders
+
+Fetch a paginated list of routine folders from your Hevy account.
+
+### Parameters
+
+<ParamField path="page" type="number" optional>
+  Page number (default: 1)
+</ParamField>
+
+<ParamField path="pageSize" type="number" optional>
+  Items per page (default: 5, max: 10)
+</ParamField>
+
+### Response
+
+<ResponseField name="page" type="number">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_count" type="number">
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="routine_folders" type="array">
+  Array of routine folder objects
+  
+  <Expandable title="Routine folder object">
+    <ResponseField name="id" type="number">
+      Unique folder identifier (use this when creating routines)
+    </ResponseField>
+    
+    <ResponseField name="index" type="number">
+      Folder order index (determines display order)
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Folder name
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      Last update timestamp in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      Creation timestamp in ISO 8601 format
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "page": 1,
+  "pageSize": 5
+}
+```
+
+```json Response
+{
+  "page": 1,
+  "page_count": 1,
+  "routine_folders": [
+    {
+      "id": 1,
+      "index": 0,
+      "title": "Push/Pull/Legs",
+      "updated_at": "2026-02-15T10:00:00Z",
+      "created_at": "2026-01-01T12:00:00Z"
+    },
+    {
+      "id": 2,
+      "index": 1,
+      "title": "Powerlifting",
+      "updated_at": "2026-02-20T14:30:00Z",
+      "created_at": "2026-01-10T09:00:00Z"
+    },
+    {
+      "id": 3,
+      "index": 2,
+      "title": "Bodybuilding",
+      "updated_at": "2026-03-01T16:00:00Z",
+      "created_at": "2026-02-01T11:00:00Z"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## get-routine-folder
+
+Get a single routine folder by its ID.
+
+### Parameters
+
+<ParamField path="folderId" type="number" required>
+  The routine folder ID
+</ParamField>
+
+### Response
+
+Returns a single routine folder object with the same structure as described in `get-routine-folders`.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "folderId": 1
+}
+```
+
+```json Response
+{
+  "id": 1,
+  "index": 0,
+  "title": "Push/Pull/Legs",
+  "updated_at": "2026-02-15T10:00:00Z",
+  "created_at": "2026-01-01T12:00:00Z"
+}
+```
+</CodeGroup>
+
+---
+
+## create-routine-folder
+
+Create a new routine folder to organize your routines.
+
+### Parameters
+
+<ParamField path="title" type="string" required>
+  Folder title
+</ParamField>
+
+### Response
+
+Returns the created routine folder object.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "title": "Hypertrophy Programs"
+}
+```
+
+```json Response
+{
+  "id": 4,
+  "index": 3,
+  "title": "Hypertrophy Programs",
+  "updated_at": "2026-03-03T17:00:00Z",
+  "created_at": "2026-03-03T17:00:00Z"
+}
+```
+</CodeGroup>
+
+---
+
+## Using Folders with Routines
+
+When creating or updating routines, you can organize them into folders by specifying the `folder_id` parameter.
+
+### Example Workflow
+
+<CodeGroup>
+```json Step 1: Create a Folder
+// Create a new folder for your program
+{
+  "title": "Push/Pull/Legs"
+}
+
+// Response
+{
+  "id": 1,
+  "title": "Push/Pull/Legs",
+  ...
+}
+```
+
+```json Step 2: Create Routines in Folder
+// Create a routine and place it in the folder
+{
+  "title": "Push Day",
+  "folder_id": 1,  // Use the folder ID from step 1
+  "exercises": [
+    {
+      "exercise_template_id": "770e8400-e29b-41d4-a716-446655440002",
+      "sets": [
+        {
+          "type": "normal",
+          "weight_kg": 100,
+          "rep_range": { "start": 8, "end": 12 }
+        }
+      ]
+    }
+  ]
+}
+```
+
+```json Step 3: View Routines by Folder
+// When you fetch routines, they include folder_id
+{
+  "page": 1,
+  "page_count": 1,
+  "routines": [
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "title": "Push Day",
+      "folder_id": 1,  // This routine is in the "Push/Pull/Legs" folder
+      ...
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440002",
+      "title": "Pull Day",
+      "folder_id": 1,  // Also in "Push/Pull/Legs"
+      ...
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440003",
+      "title": "Leg Day",
+      "folder_id": 1,  // Also in "Push/Pull/Legs"
+      ...
+    },
+    {
+      "id": "660e8400-e29b-41d4-a716-446655440004",
+      "title": "Full Body",
+      "folder_id": null,  // Not in any folder
+      ...
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Organizing Your Routines
+
+Here are some common folder organization patterns:
+
+<Accordion title="By Training Split">
+  Organize routines by training split methodology:
+  
+  - **Push/Pull/Legs**: Push Day, Pull Day, Leg Day
+  - **Upper/Lower**: Upper Body, Lower Body
+  - **Bro Split**: Chest Day, Back Day, Leg Day, Shoulder Day, Arm Day
+</Accordion>
+
+<Accordion title="By Training Goal">
+  Organize routines by training objective:
+  
+  - **Strength**: Powerlifting routines, max strength programs
+  - **Hypertrophy**: Bodybuilding splits, volume-focused training
+  - **Conditioning**: HIIT workouts, cardio routines
+</Accordion>
+
+<Accordion title="By Program">
+  Organize routines by specific training programs:
+  
+  - **Starting Strength**: Workout A, Workout B
+  - **nSuns 531**: Day 1, Day 2, Day 3, Day 4
+  - **PHAT**: Upper Power, Lower Power, Back/Shoulders, Legs, Chest/Arms
+</Accordion>
+
+<Accordion title="By Location or Equipment">
+  Organize routines by where or how you train:
+  
+  - **Home Gym**: Limited equipment routines
+  - **Commercial Gym**: Full equipment routines
+  - **Travel Workouts**: Bodyweight and minimal equipment
+</Accordion>
+
+---
+
+## Routines Without Folders
+
+Routines can exist without being in a folder. When creating a routine:
+
+- **With folder**: Set `folder_id` to a valid folder ID
+- **Without folder**: Set `folder_id` to `null` or omit it
+
+```json Example: Routine without folder
+{
+  "title": "Quick Full Body",
+  "folder_id": null,  // Or omit this field entirely
+  "exercises": [...]
+}
+```
+
+When fetching routines, those not in folders will have `folder_id: null`.

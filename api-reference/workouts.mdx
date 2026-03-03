@@ -1,0 +1,614 @@
+---
+title: 'Workout Tools'
+description: 'MCP tools for managing Hevy workouts - create, read, update, and track workout data'
+---
+
+The Hevy HTTP MCP server provides comprehensive tools for managing workout data. These tools allow you to retrieve workout history, create new workouts, update existing ones, and monitor workout events.
+
+## get-workouts
+
+Fetch a paginated list of workouts from your Hevy account.
+
+### Parameters
+
+<ParamField path="page" type="number" optional>
+  Page number (default: 1)
+</ParamField>
+
+<ParamField path="pageSize" type="number" optional>
+  Items per page (default: 5, max: 10)
+</ParamField>
+
+### Response
+
+<ResponseField name="page" type="number">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_count" type="number">
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="workouts" type="array">
+  Array of workout objects
+  
+  <Expandable title="Workout object">
+    <ResponseField name="id" type="string">
+      Unique workout identifier
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Workout title
+    </ResponseField>
+    
+    <ResponseField name="routine_id" type="string">
+      ID of the routine this workout is based on
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Workout description
+    </ResponseField>
+    
+    <ResponseField name="start_time" type="string">
+      Start time in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="end_time" type="string">
+      End time in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      Last update timestamp in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      Creation timestamp in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="exercises" type="array">
+      Array of exercises performed in this workout
+      
+      <Expandable title="Exercise object">
+        <ResponseField name="index" type="number">
+          Exercise order index
+        </ResponseField>
+        
+        <ResponseField name="title" type="string">
+          Exercise name
+        </ResponseField>
+        
+        <ResponseField name="notes" type="string">
+          Exercise notes
+        </ResponseField>
+        
+        <ResponseField name="exercise_template_id" type="string">
+          Reference to exercise template
+        </ResponseField>
+        
+        <ResponseField name="supersets_id" type="number | null">
+          Superset group identifier (null if not in a superset)
+        </ResponseField>
+        
+        <ResponseField name="sets" type="array">
+          Array of sets performed
+          
+          <Expandable title="Set object">
+            <ResponseField name="index" type="number">
+              Set order index
+            </ResponseField>
+            
+            <ResponseField name="type" type="string">
+              Set type: `normal`, `warmup`, `dropset`, or `failure`
+            </ResponseField>
+            
+            <ResponseField name="weight_kg" type="number | null">
+              Weight used in kilograms
+            </ResponseField>
+            
+            <ResponseField name="reps" type="number | null">
+              Number of repetitions
+            </ResponseField>
+            
+            <ResponseField name="distance_meters" type="number | null">
+              Distance in meters (for cardio exercises)
+            </ResponseField>
+            
+            <ResponseField name="duration_seconds" type="number | null">
+              Duration in seconds (for timed exercises)
+            </ResponseField>
+            
+            <ResponseField name="rpe" type="number | null">
+              Rate of perceived exertion (6-10 scale)
+            </ResponseField>
+            
+            <ResponseField name="custom_metric" type="number | null">
+              Custom metric value
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "page": 1,
+  "pageSize": 5
+}
+```
+
+```json Response
+{
+  "page": 1,
+  "page_count": 10,
+  "workouts": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "Upper Body Workout",
+      "routine_id": "660e8400-e29b-41d4-a716-446655440001",
+      "description": "Chest and triceps focus",
+      "start_time": "2026-03-03T10:00:00Z",
+      "end_time": "2026-03-03T11:30:00Z",
+      "updated_at": "2026-03-03T11:30:00Z",
+      "created_at": "2026-03-03T10:00:00Z",
+      "exercises": [
+        {
+          "index": 0,
+          "title": "Bench Press",
+          "notes": "Focus on controlled negatives",
+          "exercise_template_id": "770e8400-e29b-41d4-a716-446655440002",
+          "supersets_id": null,
+          "sets": [
+            {
+              "index": 0,
+              "type": "warmup",
+              "weight_kg": 60,
+              "reps": 10,
+              "distance_meters": null,
+              "duration_seconds": null,
+              "rpe": null,
+              "custom_metric": null
+            },
+            {
+              "index": 1,
+              "type": "normal",
+              "weight_kg": 100,
+              "reps": 8,
+              "distance_meters": null,
+              "duration_seconds": null,
+              "rpe": 8,
+              "custom_metric": null
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## get-workout
+
+Get a single workout by its ID.
+
+### Parameters
+
+<ParamField path="workoutId" type="string" required>
+  The workout ID
+</ParamField>
+
+### Response
+
+Returns a single workout object with the same structure as described in `get-workouts`.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "workoutId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+```json Response
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Upper Body Workout",
+  "routine_id": "660e8400-e29b-41d4-a716-446655440001",
+  "description": "Chest and triceps focus",
+  "start_time": "2026-03-03T10:00:00Z",
+  "end_time": "2026-03-03T11:30:00Z",
+  "updated_at": "2026-03-03T11:30:00Z",
+  "created_at": "2026-03-03T10:00:00Z",
+  "exercises": []
+}
+```
+</CodeGroup>
+
+---
+
+## create-workout
+
+Create a new workout with exercises and sets.
+
+### Parameters
+
+<ParamField path="workout" type="object" required>
+  Workout data to create
+  
+  <Expandable title="Workout input object">
+    <ParamField path="title" type="string" required>
+      Workout title
+    </ParamField>
+    
+    <ParamField path="description" type="string" optional>
+      Workout description (can be null)
+    </ParamField>
+    
+    <ParamField path="start_time" type="string" required>
+      Start time in ISO 8601 format (e.g., "2026-03-03T10:00:00Z")
+    </ParamField>
+    
+    <ParamField path="end_time" type="string" required>
+      End time in ISO 8601 format (e.g., "2026-03-03T11:30:00Z")
+    </ParamField>
+    
+    <ParamField path="is_private" type="boolean" optional>
+      Whether the workout is private (default: false)
+    </ParamField>
+    
+    <ParamField path="exercises" type="array" required>
+      Array of exercises to include in the workout
+      
+      <Expandable title="Exercise input object">
+        <ParamField path="exercise_template_id" type="string" required>
+          Exercise template ID (use get-exercise-templates to find valid IDs)
+        </ParamField>
+        
+        <ParamField path="superset_id" type="number" optional>
+          Superset group ID (null if not in a superset)
+        </ParamField>
+        
+        <ParamField path="notes" type="string" optional>
+          Exercise notes (can be null)
+        </ParamField>
+        
+        <ParamField path="sets" type="array" required>
+          Array of sets to perform
+          
+          <Expandable title="Set input object">
+            <ParamField path="type" type="string" required>
+              Set type: `normal`, `warmup`, `dropset`, or `failure`
+            </ParamField>
+            
+            <ParamField path="weight_kg" type="number" optional>
+              Weight in kilograms (can be null)
+            </ParamField>
+            
+            <ParamField path="reps" type="number" optional>
+              Number of repetitions (can be null)
+            </ParamField>
+            
+            <ParamField path="distance_meters" type="number" optional>
+              Distance in meters for cardio exercises (can be null)
+            </ParamField>
+            
+            <ParamField path="duration_seconds" type="number" optional>
+              Duration in seconds for timed exercises (can be null)
+            </ParamField>
+            
+            <ParamField path="rpe" type="number" optional>
+              Rate of perceived exertion: 6, 7, 7.5, 8, 8.5, 9, 9.5, or 10 (can be null)
+            </ParamField>
+            
+            <ParamField path="custom_metric" type="number" optional>
+              Custom metric value (can be null)
+            </ParamField>
+          </Expandable>
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+Returns the created workout object.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "workout": {
+    "title": "Leg Day",
+    "description": "Squat focus session",
+    "start_time": "2026-03-03T14:00:00Z",
+    "end_time": "2026-03-03T15:30:00Z",
+    "is_private": false,
+    "exercises": [
+      {
+        "exercise_template_id": "770e8400-e29b-41d4-a716-446655440010",
+        "superset_id": null,
+        "notes": "Go deep, pause at bottom",
+        "sets": [
+          {
+            "type": "warmup",
+            "weight_kg": 60,
+            "reps": 10
+          },
+          {
+            "type": "normal",
+            "weight_kg": 140,
+            "reps": 5,
+            "rpe": 8.5
+          },
+          {
+            "type": "normal",
+            "weight_kg": 140,
+            "reps": 5,
+            "rpe": 9
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+```json Response
+{
+  "id": "880e8400-e29b-41d4-a716-446655440020",
+  "title": "Leg Day",
+  "routine_id": "",
+  "description": "Squat focus session",
+  "start_time": "2026-03-03T14:00:00Z",
+  "end_time": "2026-03-03T15:30:00Z",
+  "updated_at": "2026-03-03T15:30:00Z",
+  "created_at": "2026-03-03T15:30:00Z",
+  "exercises": [
+    {
+      "index": 0,
+      "title": "Squat",
+      "notes": "Go deep, pause at bottom",
+      "exercise_template_id": "770e8400-e29b-41d4-a716-446655440010",
+      "supersets_id": null,
+      "sets": [
+        {
+          "index": 0,
+          "type": "warmup",
+          "weight_kg": 60,
+          "reps": 10,
+          "distance_meters": null,
+          "duration_seconds": null,
+          "rpe": null,
+          "custom_metric": null
+        },
+        {
+          "index": 1,
+          "type": "normal",
+          "weight_kg": 140,
+          "reps": 5,
+          "distance_meters": null,
+          "duration_seconds": null,
+          "rpe": 8.5,
+          "custom_metric": null
+        },
+        {
+          "index": 2,
+          "type": "normal",
+          "weight_kg": 140,
+          "reps": 5,
+          "distance_meters": null,
+          "duration_seconds": null,
+          "rpe": 9,
+          "custom_metric": null
+        }
+      ]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## update-workout
+
+Update an existing workout by its ID.
+
+### Parameters
+
+<ParamField path="workoutId" type="string" required>
+  The workout ID to update
+</ParamField>
+
+<ParamField path="workout" type="object" required>
+  Updated workout data (same structure as create-workout)
+</ParamField>
+
+### Response
+
+Returns the updated workout object.
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "workoutId": "880e8400-e29b-41d4-a716-446655440020",
+  "workout": {
+    "title": "Leg Day - Updated",
+    "description": "Squat and leg press",
+    "start_time": "2026-03-03T14:00:00Z",
+    "end_time": "2026-03-03T16:00:00Z",
+    "is_private": false,
+    "exercises": [
+      {
+        "exercise_template_id": "770e8400-e29b-41d4-a716-446655440010",
+        "superset_id": null,
+        "notes": "Added one more set",
+        "sets": [
+          {
+            "type": "warmup",
+            "weight_kg": 60,
+            "reps": 10
+          },
+          {
+            "type": "normal",
+            "weight_kg": 140,
+            "reps": 5,
+            "rpe": 8.5
+          },
+          {
+            "type": "normal",
+            "weight_kg": 140,
+            "reps": 5,
+            "rpe": 9
+          },
+          {
+            "type": "normal",
+            "weight_kg": 140,
+            "reps": 4,
+            "rpe": 9.5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## get-workout-count
+
+Get the total number of workouts in your account.
+
+### Parameters
+
+No parameters required.
+
+### Response
+
+<ResponseField name="workout_count" type="number">
+  Total number of workouts
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```json Request
+{}
+```
+
+```json Response
+{
+  "workout_count": 237
+}
+```
+</CodeGroup>
+
+---
+
+## get-workout-events
+
+Get paginated workout update/delete events. This tool is useful for synchronizing workout data and tracking changes over time.
+
+### Parameters
+
+<ParamField path="page" type="number" optional>
+  Page number (default: 1)
+</ParamField>
+
+<ParamField path="pageSize" type="number" optional>
+  Items per page (default: 5, max: 10)
+</ParamField>
+
+<ParamField path="since" type="string" optional>
+  ISO 8601 timestamp to filter events since a specific time
+</ParamField>
+
+### Response
+
+<ResponseField name="page" type="number">
+  Current page number
+</ResponseField>
+
+<ResponseField name="page_count" type="number">
+  Total number of pages available
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  Array of workout events
+  
+  <Expandable title="Event types">
+    <ResponseField name="type" type="string">
+      Event type: `updated` or `deleted`
+    </ResponseField>
+    
+    **For "updated" events:**
+    
+    <ResponseField name="workout" type="object">
+      Full workout object (same structure as get-workout)
+    </ResponseField>
+    
+    **For "deleted" events:**
+    
+    <ResponseField name="id" type="string">
+      ID of the deleted workout
+    </ResponseField>
+    
+    <ResponseField name="deleted_at" type="string">
+      Deletion timestamp in ISO 8601 format
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+```json Request
+{
+  "page": 1,
+  "pageSize": 5,
+  "since": "2026-03-01T00:00:00Z"
+}
+```
+
+```json Response
+{
+  "page": 1,
+  "page_count": 2,
+  "events": [
+    {
+      "type": "updated",
+      "workout": {
+        "id": "880e8400-e29b-41d4-a716-446655440020",
+        "title": "Leg Day - Updated",
+        "routine_id": "",
+        "description": "Squat and leg press",
+        "start_time": "2026-03-03T14:00:00Z",
+        "end_time": "2026-03-03T16:00:00Z",
+        "updated_at": "2026-03-03T16:05:00Z",
+        "created_at": "2026-03-03T15:30:00Z",
+        "exercises": []
+      }
+    },
+    {
+      "type": "deleted",
+      "id": "990e8400-e29b-41d4-a716-446655440030",
+      "deleted_at": "2026-03-02T18:00:00Z"
+    }
+  ]
+}
+```
+</CodeGroup>
