@@ -70,7 +70,7 @@ Before you begin, ensure you have:
 
 The MCP endpoint runs as an HTTP server on `http://localhost:3000/mcp` by default. All requests are authenticated using API key bearer tokens before reaching any tool handler. Your Hevy API key is only sent server-side to `api.hevyapp.com` and is never exposed to MCP clients.
 
-```
+```text
 MCP Client (Claude, Poke, etc.)
        ↓ (HTTP + Authorization header)
 Hevy HTTP MCP Server
