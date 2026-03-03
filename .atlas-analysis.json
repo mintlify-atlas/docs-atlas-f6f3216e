@@ -1,0 +1,89 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Hevy HTTP MCP",
+  "projectDescription": "HTTP Model Context Protocol server for the Hevy workout tracker API, enabling AI assistants to interact with your fitness data.",
+  "theme": "palm",
+  "primaryColor": "#5B7CFF",
+  "lightColor": "#7B9AFF",
+  "darkColor": "#4A5FCC",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/configuration",
+              "guides/authentication",
+              "guides/client-setup"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/hevy-client",
+              "architecture/error-handling"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "MCP Tools",
+            "pages": [
+              "api-reference/workouts",
+              "api-reference/routines",
+              "api-reference/exercise-templates",
+              "api-reference/routine-folders"
+            ]
+          },
+          {
+            "group": "Types",
+            "pages": [
+              "api-reference/types/workouts",
+              "api-reference/types/routines",
+              "api-reference/types/templates"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "HTTP MCP server with bearer token authentication",
+    "Complete Hevy API coverage (workouts, routines, templates, folders)",
+    "Type-safe TypeScript client with Zod validation",
+    "Built on Elysia and elysia-mcp for high performance",
+    "Structured logging and comprehensive error handling",
+    "Easy integration with Claude Desktop, Cursor, and Poke"
+  ],
+  "publicApiSurface": [
+    "get-workouts",
+    "get-workout",
+    "create-workout",
+    "update-workout",
+    "get-workout-count",
+    "get-workout-events",
+    "get-routines",
+    "get-routine-by-id",
+    "create-routine",
+    "update-routine",
+    "get-exercise-templates",
+    "get-exercise-template",
+    "get-routine-folders",
+    "create-routine-folder",
+    "get-routine-folder"
+  ]
+}
